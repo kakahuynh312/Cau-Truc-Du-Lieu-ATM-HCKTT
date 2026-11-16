@@ -29,21 +29,6 @@ namespace {
 	const int MAIN_USER = 2;
 	const int MAIN_THOAT = 3;
 
-	// Du lieu mau (it nhat 10 the tu), chi dung khi chua co file TheTu.txt
-	const int SEED_COUNT = 10;
-	const char* const SEED_ID[SEED_COUNT] = {
-		"10014504501111", "10014504501112", "10014504501113", "10014504501114", "10014504501115",
-		"10014504501116", "10014504501117", "10014504501118", "10014504501119", "10014504501120"
-	};
-	const char* const SEED_NAME[SEED_COUNT] = {
-		"Nguyen Trung Kien", "Tran Thi Mai", "Le Van Hung", "Pham Thi Lan", "Hoang Minh Duc",
-		"Vu Thi Huong", "Dang Quoc Bao", "Bui Thanh Tung", "Do Ngoc Anh", "Ngo Van Long"
-	};
-	const long long SEED_BALANCE[SEED_COUNT] = {
-		1000000, 2500000, 500000, 3000000, 750000,
-		1200000, 5000000, 850000, 2000000, 1500000
-	};
-
 	/**********************************************************
 	* @Description Nhap lua chon menu trong khoang [iMin, iMax],
 	*              lap lai den khi hop le
