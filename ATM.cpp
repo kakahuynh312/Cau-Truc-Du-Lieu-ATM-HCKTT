@@ -29,21 +29,6 @@ namespace {
 	const int MAIN_USER = 2;
 	const int MAIN_THOAT = 3;
 
-	// Du lieu mau (it nhat 10 the tu), chi dung khi chua co file TheTu.txt
-	const int SEED_COUNT = 10;
-	const char* const SEED_ID[SEED_COUNT] = {
-		"10014504501111", "10014504501112", "10014504501113", "10014504501114", "10014504501115",
-		"10014504501116", "10014504501117", "10014504501118", "10014504501119", "10014504501120"
-	};
-	const char* const SEED_NAME[SEED_COUNT] = {
-		"Nguyen Trung Kien", "Tran Thi Mai", "Le Van Hung", "Pham Thi Lan", "Hoang Minh Duc",
-		"Vu Thi Huong", "Dang Quoc Bao", "Bui Thanh Tung", "Do Ngoc Anh", "Ngo Van Long"
-	};
-	const long long SEED_BALANCE[SEED_COUNT] = {
-		1000000, 2500000, 500000, 3000000, 750000,
-		1200000, 5000000, 850000, 2000000, 1500000
-	};
-
 	/**********************************************************
 	* @Description Nhap lua chon menu trong khoang [iMin, iMax],
 	*              lap lai den khi hop le
@@ -98,23 +83,14 @@ bool ATM::taiDuLieu() {
         return false;
     }
 
+    // Doc danh sach the tu da co
     bool bDocDuoc = this->_quanLyTheTu.docFile(FILE_THE_TU);
 
-    if (bDocDuoc && this->_quanLyTheTu.getSoLuongThe() > 0) {
-        return true;
+    if (!bDocDuoc) {
+        return false;
     }
 
-    return this->khoiTaoDuLieuMau();
-}
-
-bool ATM::khoiTaoDuLieuMau() {
-	int iSoTheTao = 0;
-	for (int iIndex = 0; iIndex < SEED_COUNT; ++iIndex) {
-		if (this->_quanLyTheTu.themTaiKhoan(SEED_ID[iIndex], SEED_NAME[iIndex], SEED_BALANCE[iIndex], DEFAULT_CURRENCY)) {
-			++iSoTheTao;
-		}
-	}
-	return iSoTheTao == SEED_COUNT;
+    return true;
 }
 
 void ATM::hienThiMenuChinh() const {
@@ -137,43 +113,43 @@ void ATM::dangNhapAdmin() {
 }
 
 void ATM::dangNhapUser() {
-	ConsoleUtil::xoaManHinh();
-	ConsoleUtil::inTieuDe("DANG NHAP USER");
+    ConsoleUtil::xoaManHinh();
+    ConsoleUtil::inTieuDe("DANG NHAP USER");
 
-	for (int iLanThu = 0; iLanThu < MAX_LOGIN_ATTEMPTS; ++iLanThu) {
-		const string strID = ConsoleUtil::nhapDong(" ID: ");
-		const string strPin = ConsoleUtil::nhapMatKhau(" Pin: ", PIN_LENGTH, true);
+    for (int iLanThu = 0; iLanThu < MAX_LOGIN_ATTEMPTS; ++iLanThu) {
+        const string strID = ConsoleUtil::nhapDong(" ID: ");
+        const string strPin = ConsoleUtil::nhapMatKhau(" Pin: ", PIN_LENGTH, true);
 
-		TheTu* pTheTu = this->_quanLyTheTu.timTheoID(strID);
-		if (pTheTu != nullptr && pTheTu->getBiKhoa()) {
-			ConsoleUtil::inLoi("The da bi khoa. Vui long lien he Admin de mo khoa.");
-			ConsoleUtil::tamDung();
-			return;
-		}
+        TheTu* pTheTu = this->_quanLyTheTu.timTheoID(strID);
 
-		// kiemTraDangNhap tu dem so lan sai, khoa the va in thong bao
-		if (this->_quanLyTheTu.kiemTraDangNhap(strID, strPin)) {
+        if (pTheTu != nullptr && pTheTu->getBiKhoa()) {
+            ConsoleUtil::inLoi("The da bi khoa. Vui long lien he Admin de mo khoa.");
+            ConsoleUtil::tamDung();
+            return;
+        }
 
-			if (pTheTu->getDoiPINLanDau() && !this->doiPinLanDau(*pTheTu)) {
-				return;
-			}
+        if (this->_quanLyTheTu.kiemTraDangNhap(strID, strPin)) {
 
-			MenuUser menuUser(this->_quanLyTheTu, strID);
-			menuUser.chay();
+            if (pTheTu->getDoiPINLanDau() && !this->doiPinLanDau(*pTheTu)) {
+                return;
+            }
 
-			return;
-		}
+            MenuUser menuUser(this->_quanLyTheTu, strID);
+            menuUser.chay();
+            return;
+        }
 
-		// The vua bi khoa o lan nhap sai thu 3 cua chinh the nay
-		if (pTheTu != nullptr && pTheTu->getBiKhoa()) {
-			// TODO: Need to review and check again (trang thai khoa chua duoc luu vao TheTu.txt)
-			break;
-		}
-	}
+        if (pTheTu != nullptr && pTheTu->getBiKhoa()) {
+            ConsoleUtil::tamDung();
+            return;
+        }
+    }
 
-	ConsoleUtil::inLoi("Nhap sai qua " + to_string(MAX_LOGIN_ATTEMPTS) + " lan. He thong se thoat.");
-	ConsoleUtil::tamDung();
-	this->_bThoat = true;
+    ConsoleUtil::inLoi("Ban da nhap sai qua 3 lan. Vui long dang nhap lai!");
+    ConsoleUtil::tamDung();
+
+    // Khong gan _bThoat = true
+    // Quay ve menu ATM
 }
 
 

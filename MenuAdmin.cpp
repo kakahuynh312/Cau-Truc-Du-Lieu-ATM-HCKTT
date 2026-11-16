@@ -9,9 +9,6 @@ namespace {
 	// Ma PIN mac dinh cua tai khoan moi (chi dung de thong bao)
 	const string DEFAULT_PIN = "123456";
 
-	// Loai tien te mac dinh cua tai khoan moi
-	const string DEFAULT_CURRENCY = "VND";
-
 	// Menu Admin
 	const int ADMIN_XEM_DANH_SACH = 1;
 	const int ADMIN_THEM_TAI_KHOAN = 2;
@@ -84,37 +81,59 @@ void MenuAdmin::xemDanhSach() const {
 }
 
 void MenuAdmin::themTaiKhoan() {
-	ConsoleUtil::xoaManHinh();
-	ConsoleUtil::inTieuDe("THEM TAI KHOAN");
+    ConsoleUtil::xoaManHinh();
+    ConsoleUtil::inTieuDe("THEM TAI KHOAN");
 
-	string strId;
-	if (!this->nhapId(strId)) {
-		return;
-	}
+    string strId;
+    if (!this->nhapId(strId)) {
+        return;
+    }
 
-	if (this->_quanLyTheTu.tonTai(strId)) {
-		ConsoleUtil::inThongBao("ID da ton tai!");
-		ConsoleUtil::tamDung();
-		return;
-	}
+    if (this->_quanLyTheTu.tonTai(strId)) {
+        ConsoleUtil::inThongBao("ID da ton tai!");
+        ConsoleUtil::tamDung();
+        return;
+    }
 
-	const string strTen = ConsoleUtil::nhapDong(" Ten tai khoan: ");
-	if (strTen.empty()) {
-		ConsoleUtil::inLoi("Ten tai khoan khong duoc de trong!");
-		ConsoleUtil::tamDung();
-		return;
-	}
+    const string strTen = ConsoleUtil::nhapDong(" Ten tai khoan: ");
+    if (strTen.empty()) {
+        ConsoleUtil::inLoi("Ten tai khoan khong duoc de trong!");
+        ConsoleUtil::tamDung();
+        return;
+    }
 
-	// nhapSoNguyen tu lap lai den khi nhap so nguyen khong am hop le
-	const long long llSoDu = ConsoleUtil::nhapSoNguyen(" So du ban dau: ");
+    const long long llSoDu =
+        ConsoleUtil::nhapSoNguyen(" So du ban dau: ");
 
-	if (this->_quanLyTheTu.themTaiKhoan(strId, strTen, llSoDu, DEFAULT_CURRENCY)) {
-		ConsoleUtil::inThanhCong("Them tai khoan thanh cong! Ma PIN mac dinh: " + DEFAULT_PIN);
-	}
-	else {
-		ConsoleUtil::inLoi("Them tai khoan that bai!");
-	}
-	ConsoleUtil::tamDung();
+    string strLoaiTien;
+    while (true) {
+        strLoaiTien = ConsoleUtil::nhapDong(
+            " Don vi tien te (VND/USD/EUR): "
+        );
+
+        if (strLoaiTien == "VND" ||
+            strLoaiTien == "USD" ||
+            strLoaiTien == "EUR") {
+            break;
+        }
+
+        ConsoleUtil::inLoi(
+            "Don vi tien te khong hop le! Vui long nhap VND, USD hoac EUR."
+        );
+    }
+
+    if (this->_quanLyTheTu.themTaiKhoan(
+        strId, strTen, llSoDu, strLoaiTien
+    )) {
+        ConsoleUtil::inThanhCong(
+            "Them tai khoan thanh cong! Ma PIN mac dinh: " + DEFAULT_PIN
+        );
+    }
+    else {
+        ConsoleUtil::inLoi("Them tai khoan that bai!");
+    }
+
+    ConsoleUtil::tamDung();
 }
 
 void MenuAdmin::xoaTaiKhoan() {

@@ -2,6 +2,7 @@
 #define MENUUSER_H
 
 #include "QuanLyTheTu.h"
+#include "QuanLyGiaoDich.h"
 
 #include <string>
 
@@ -10,6 +11,7 @@ using namespace std;
 class MenuUser {
 private:
     QuanLyTheTu& _quanLyTheTu;
+    QuanLyGiaoDich _quanLyGiaoDich;
     string _strID;
 
     void xemThongTin();
