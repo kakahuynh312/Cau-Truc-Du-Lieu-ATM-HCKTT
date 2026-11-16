@@ -17,6 +17,7 @@ private:
 public:
     bool docFile(const string& strDuongDan = "data/TheTu.txt");
     bool ghiFile(const string& strDuongDan = "data/TheTu.txt") const;
+    bool khoiTao10TheMacDinh(const string& strDuongDan = "data/TheTu.txt");
     void hienThiDanhSach() const;
 
     TheTu* timTheoID(const string& strID);
