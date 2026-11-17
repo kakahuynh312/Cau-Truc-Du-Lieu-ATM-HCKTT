@@ -1,24 +1,15 @@
 #include "ATM.h"
 
-#include <filesystem>
-#include <system_error>
-
 #include "ConsoleUtil.h"
 #include "MenuAdmin.h"
 #include "MenuUser.h"
-#include "QuanLyTaiKhoan.h"
 
 using namespace std;
 
 namespace {
-	// Duong dan tuong doi toi thu muc va file du lieu
-	const string DIR_DATA = "data";
-	const string FILE_THE_TU = "data/TheTu.txt";
-
 	const string DEFAULT_PIN = "123456";
-	const string DEFAULT_CURRENCY = "VND";
 
-	// So lan nhap sai toi da truoc khi thoat / huy
+	// So lan nhap sai toi da truoc khi khoa the va thoat he thong
 	const int MAX_LOGIN_ATTEMPTS = 3;
 
 	// Do dai ma PIN hop le
@@ -29,10 +20,6 @@ namespace {
 	const int MAIN_USER = 2;
 	const int MAIN_THOAT = 3;
 
-	/**********************************************************
-	* @Description Nhap lua chon menu trong khoang [iMin, iMax],
-	*              lap lai den khi hop le
-	**********************************************************/
 	int docLuaChon(int iMin, int iMax) {
 		while (true) {
 			const long long llLuaChon = ConsoleUtil::nhapSoNguyen(" Lua chon: ");
@@ -76,21 +63,13 @@ void ATM::chay() {
 }
 
 bool ATM::taiDuLieu() {
-    error_code errCode;
-    filesystem::create_directories(DIR_DATA, errCode);
+	// QuanLyAdmin tu tao Admin.txt (3 admin) neu chua co
+	if (!this->_quanLyAdmin.taiDuLieu()) {
+		return false;
+	}
 
-    if (!this->_quanLyAdmin.taiDuLieu()) {
-        return false;
-    }
-
-    // Doc danh sach the tu da co
-    bool bDocDuoc = this->_quanLyTheTu.docFile(FILE_THE_TU);
-
-    if (!bDocDuoc) {
-        return false;
-    }
-
-    return true;
+	// QuanLyTheTu tu tao TheTu.txt (10 the tu) cung file [ID].txt, LichSu[ID].txt neu chua co
+	return this->_quanLyTheTu.taiDuLieu();
 }
 
 void ATM::hienThiMenuChinh() const {
@@ -113,50 +92,47 @@ void ATM::dangNhapAdmin() {
 }
 
 void ATM::dangNhapUser() {
-    ConsoleUtil::xoaManHinh();
-    ConsoleUtil::inTieuDe("DANG NHAP USER");
+	ConsoleUtil::xoaManHinh();
+	ConsoleUtil::inTieuDe("DANG NHAP USER");
 
-    for (int iLanThu = 0; iLanThu < MAX_LOGIN_ATTEMPTS; ++iLanThu) {
-        const string strID = ConsoleUtil::nhapDong(" ID: ");
-        const string strPin = ConsoleUtil::nhapMatKhau(" Pin: ", PIN_LENGTH, true);
+	for (int iLanThu = 0; iLanThu < MAX_LOGIN_ATTEMPTS; ++iLanThu) {
+		const string strID = ConsoleUtil::nhapDong(" ID: ");
+		const string strPin = ConsoleUtil::nhapMatKhau(" Pin: ", PIN_LENGTH, true);
 
-        TheTu* pTheTu = this->_quanLyTheTu.timTheoID(strID);
+		TheTu* pTheTu = this->_quanLyTheTu.timTheoID(strID);
+		if (pTheTu != nullptr && pTheTu->getBiKhoa()) {
+			// The da bi khoa tu truoc (trang thai doc tu TheTu.txt): ve menu chinh
+			ConsoleUtil::inLoi("The da bi khoa. Vui long lien he Admin de mo khoa.");
+			ConsoleUtil::tamDung();
+			return;
+		}
 
-        if (pTheTu != nullptr && pTheTu->getBiKhoa()) {
-            ConsoleUtil::inLoi("The da bi khoa. Vui long lien he Admin de mo khoa.");
-            ConsoleUtil::tamDung();
-            return;
-        }
+		// kiemTraDangNhap dem sai rieng tung ID; du 3 lan thi khoa the va ghi "Da khoa" vao TheTu.txt
+		if (this->_quanLyTheTu.kiemTraDangNhap(strID, strPin)) {
+			if (pTheTu->getDoiPINLanDau() && !this->doiPinLanDau(*pTheTu)) {
+				return;
+			}
 
-        if (this->_quanLyTheTu.kiemTraDangNhap(strID, strPin)) {
+			MenuUser menuUser(this->_quanLyTheTu, strID);
+			menuUser.chay();
+			return;
+		}
 
-            if (pTheTu->getDoiPINLanDau() && !this->doiPinLanDau(*pTheTu)) {
-                return;
-            }
+		// The vua bi khoa o lan sai thu 3 (thong bao da duoc in): thoat vong lap
+		if (pTheTu != nullptr && pTheTu->getBiKhoa()) {
+			break;
+		}
+	}
 
-            MenuUser menuUser(this->_quanLyTheTu, strID);
-            menuUser.chay();
-            return;
-        }
-
-        if (pTheTu != nullptr && pTheTu->getBiKhoa()) {
-            ConsoleUtil::tamDung();
-            return;
-        }
-    }
-
-    ConsoleUtil::inLoi("Ban da nhap sai qua 3 lan. Vui long dang nhap lai!");
-    ConsoleUtil::tamDung();
-
-    // Khong gan _bThoat = true
-    // Quay ve menu ATM
+	// Nhap sai 3 lan: thoat khoi he thong (the o tren, neu co, da bi khoa)
+	ConsoleUtil::inLoi("Nhap sai qua " + to_string(MAX_LOGIN_ATTEMPTS) + " lan. The da bi khoa.");
+	ConsoleUtil::tamDung();
 }
-
 
 bool ATM::doiPinLanDau(TheTu& theTu) {
 	ConsoleUtil::xoaManHinh();
 	ConsoleUtil::inTieuDe("DOI MA PIN LAN DAU");
-	ConsoleUtil::inLoi(" Day la lan dang nhap dau tien, ban phai doi ma PIN.");
+	ConsoleUtil::inCanhBao(" Day la lan dang nhap dau tien, ban phai doi ma PIN.");
 
 	for (int iLanThu = 0; iLanThu < MAX_LOGIN_ATTEMPTS; ++iLanThu) {
 		if (this->nhapVaDoiPin(theTu)) {
@@ -168,21 +144,6 @@ bool ATM::doiPinLanDau(TheTu& theTu) {
 	ConsoleUtil::inLoi("Chua doi duoc ma PIN. Phien dang nhap bi huy.");
 	ConsoleUtil::tamDung();
 	return false;
-}
-
-void ATM::doiPinTuMenu(TheTu& theTu) {
-	ConsoleUtil::xoaManHinh();
-	ConsoleUtil::inTieuDe("DOI MA PIN");
-
-	const string strPinCu = ConsoleUtil::nhapMatKhau(" Nhap ma PIN cu: ", PIN_LENGTH, true);
-	if (!theTu.kiemTraPIN(strPinCu)) {
-		ConsoleUtil::inLoi("Ma PIN cu khong chinh xac! Giao dich bi huy.");
-		ConsoleUtil::tamDung();
-		return;
-	}
-
-	this->nhapVaDoiPin(theTu);
-	ConsoleUtil::tamDung();
 }
 
 bool ATM::nhapVaDoiPin(TheTu& theTu) {
